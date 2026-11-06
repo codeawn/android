@@ -16,8 +16,6 @@ import androidx.preference.SwitchPreference
 import org.cryptomator.presentation.BuildConfig
 import org.cryptomator.presentation.R
 import org.cryptomator.presentation.docprovider.CryptomatorDocumentsProvider
-import org.cryptomator.presentation.intent.Intents
-import org.cryptomator.presentation.licensing.LicenseEnforcer
 import org.cryptomator.presentation.presenter.ContextHolder
 import org.cryptomator.presentation.service.PhotoContentJob
 import org.cryptomator.presentation.service.ProductInfo
@@ -45,14 +43,12 @@ import timber.log.Timber
 class SettingsFragment : PreferenceFragmentCompatLayout() {
 
 	private lateinit var sharedPreferencesHandler: SharedPreferencesHandler
-	private val licenseChangeListener = Consumer<String> { _ -> setupLicense() }
 
 	override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
 		sharedPreferencesHandler = SharedPreferencesHandler(activity())
 		addPreferencesFromResource(R.xml.preferences)
 		isBiometricAuthenticationNotAvailableRemovePreference()
 		setupAppVersion()
-		setupLicense()
 		setupCryptomatorVariants()
 	}
 
@@ -169,103 +165,6 @@ class SettingsFragment : PreferenceFragmentCompatLayout() {
 		}
 	}
 
-	private fun setupLicense() {
-		val licenseCategory = findPreference(LICENSE_ITEM_KEY) as PreferenceCategory?
-		val licensePref = findPreference(SharedPreferencesHandler.MAIL) as Preference?
-		licensePref?.isEnabled = true
-		when {
-			FlavorConfig.isPremiumFlavor -> {
-				licensePref?.let { pref ->
-					pref.title = getString(R.string.screen_settings_license_title_unlocked)
-					pref.summary = getString(R.string.screen_settings_license_summary_write_access)
-					pref.onPreferenceClickListener = null
-				}
-				removeUpdateCheck()
-			}
-			FlavorConfig.isFreemiumFlavor -> {
-				val uiState = LicenseEnforcer(sharedPreferencesHandler).evaluateUiState()
-				val hasSubscription = uiState.hasRunningSubscription
-				licensePref?.let { pref ->
-					if (uiState.hasPaidLicense) {
-						pref.title = getString(R.string.screen_settings_license_title_unlocked)
-						pref.summary = getString(R.string.screen_settings_license_summary_write_access)
-						pref.onPreferenceClickListener = null
-					} else {
-						pref.title = getString(R.string.screen_settings_license_title_unlock)
-						pref.summary = if (uiState.trialState.isActive) {
-							getString(R.string.screen_settings_license_summary_trial_expires, uiState.trialState.formattedExpirationDate)
-						} else {
-							getString(R.string.screen_settings_license_summary_tap_to_unlock)
-						}
-						pref.setOnPreferenceClickListener {
-							Intents.licenseCheckIntent().startActivity(activity() as ContextHolder)
-							true
-						}
-					}
-				}
-				licenseCategory?.let { category ->
-					val hasLifetimeLicense = sharedPreferencesHandler.licenseToken().isNotEmpty()
-					category.togglePreference(MANAGE_SUBSCRIPTION_KEY, hasSubscription) {
-						Preference(requireContext()).apply {
-							key = MANAGE_SUBSCRIPTION_KEY
-							title = getString(R.string.screen_settings_manage_subscription)
-							setOnPreferenceClickListener {
-								val url = "https://play.google.com/store/account/subscriptions" +
-									"?sku=${ProductInfo.PRODUCT_YEARLY_SUBSCRIPTION}" +
-									"&package=${requireContext().packageName}"
-								startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-								true
-							}
-						}
-					}
-					category.togglePreference(UPGRADE_LIFETIME_KEY, hasSubscription && !hasLifetimeLicense) {
-						Preference(requireContext()).apply {
-							key = UPGRADE_LIFETIME_KEY
-							title = getString(R.string.screen_settings_upgrade_to_lifetime)
-							setOnPreferenceClickListener {
-								Intents.licenseCheckIntent().startActivity(activity() as ContextHolder)
-								true
-							}
-						}
-					}
-				}
-				removeUpdateCheck()
-			}
-			else -> {
-				licensePref?.let { pref ->
-					val mail = sharedPreferencesHandler.mail()
-					if (mail.isEmpty()) {
-						pref.title = getString(R.string.screen_settings_license_title_unlock)
-						pref.summary = getString(R.string.screen_settings_license_summary_tap_to_unlock)
-						pref.setOnPreferenceClickListener {
-							Intents.licenseCheckIntent().startActivity(activity() as ContextHolder)
-							true
-						}
-					} else {
-						pref.title = getString(R.string.screen_settings_license_title_unlocked)
-						pref.summary = format(getString(R.string.screen_settings_license_summary_write_access_mail), mail)
-						pref.onPreferenceClickListener = null
-					}
-				}
-				if (FlavorConfig.isApkStoreFlavor) {
-					setupUpdateCheck()
-				} else {
-					removeUpdateCheck()
-				}
-			}
-		}
-	}
-
-	private fun PreferenceCategory.togglePreference(key: String, show: Boolean, build: () -> Preference) {
-		if (show) {
-			if (findPreference<Preference>(key) == null) {
-				addPreference(build())
-			}
-		} else {
-			findPreference<Preference>(key)?.let { removePreference(it) }
-		}
-	}
-
 	private fun removeUpdateCheck() {
 		val versionCategory = findPreference("versionCategory") as PreferenceCategory?
 		(findPreference(UPDATE_CHECK_ITEM_KEY) as Preference?)?.let { versionCategory?.removePreference(it) }
@@ -325,11 +224,9 @@ class SettingsFragment : PreferenceFragmentCompatLayout() {
 		}
 		(findPreference(SharedPreferencesHandler.PHOTO_UPLOAD_VAULT) as Preference?)?.intent = Intent(context, AutoUploadChooseVaultActivity::class.java)
 		(findPreference(SharedPreferencesHandler.LICENSES_ACTIVITY) as Preference?)?.intent = Intent(context, LicensesActivity::class.java)
-		sharedPreferencesHandler.addLicenseChangedListeners(licenseChangeListener)
 	}
 
 	override fun onPause() {
-		sharedPreferencesHandler.removeLicenseChangedListeners(licenseChangeListener)
 		super.onPause()
 	}
 
@@ -398,9 +295,6 @@ class SettingsFragment : PreferenceFragmentCompatLayout() {
 		private const val APP_VERSION_ITEM_KEY = "appVersion"
 		private const val SEND_ERROR_REPORT_ITEM_KEY = "sendErrorReport"
 		private const val BIOMETRIC_AUTHENTICATION_ITEM_KEY = "biometricAuthentication"
-		private const val LICENSE_ITEM_KEY = "license"
-		private const val MANAGE_SUBSCRIPTION_KEY = "manageSubscription"
-		private const val UPGRADE_LIFETIME_KEY = "upgradeLifetime"
 		private const val UPDATE_CHECK_ITEM_KEY = "updateCheck"
 		private const val UPDATE_INTERVAL_ITEM_KEY = "updateInterval"
 		private const val CLEAR_CACHE_ITEM_KEY = "clearCache"

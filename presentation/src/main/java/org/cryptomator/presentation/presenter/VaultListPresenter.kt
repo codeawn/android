@@ -55,8 +55,6 @@ import org.cryptomator.presentation.ui.dialog.AppIsObscuredInfoDialog
 import org.cryptomator.presentation.ui.dialog.AskForLockScreenDialog
 import org.cryptomator.presentation.ui.dialog.CBCPasswordVaultsMigrationDialog
 import org.cryptomator.presentation.ui.dialog.EnterPasswordDialog
-import org.cryptomator.presentation.ui.dialog.LicenseLostDialog
-import org.cryptomator.presentation.ui.dialog.TrialExpiredDialog
 import org.cryptomator.presentation.ui.dialog.UpdateAppAvailableDialog
 import org.cryptomator.presentation.ui.dialog.UpdateAppDialog
 import org.cryptomator.presentation.ui.dialog.VaultsRemovedDuringMigrationDialog
@@ -116,18 +114,6 @@ class VaultListPresenter @Inject constructor( //
 		if (launchWelcomeFlowIfNeeded()) {
 			return
 		}
-
-		if (FlavorConfig.isFreemiumFlavor) {
-			val alreadyKnownExpired = sharedPreferencesHandler.isTrialExpired()
-			val trialState = licenseEnforcer.evaluateTrialState()
-			if (!alreadyKnownExpired && trialState.isExpired && !licenseEnforcer.hasPaidLicense()) {
-				view?.showDialog(TrialExpiredDialog.newInstance())
-			}
-			// Invokes the listener right away, so this also evaluates the sale promo on resume.
-			sharedPreferencesHandler.addLicenseChangedListeners(licenseChangeListener)
-		}
-
-		showLicenseLostDialogIfNeeded()
 	}
 
 	private fun launchWelcomeFlowIfNeeded(): Boolean {
@@ -139,18 +125,6 @@ class VaultListPresenter @Inject constructor( //
 			return true
 		}
 		return false
-	}
-
-	// While Accrescent counted as a premium flavor, Upgrade13To14 dropped its users' license token but kept their mail.
-	// Clearing the mail shows the dialog only once and stops Settings from presenting the lost license as active.
-	private fun showLicenseLostDialogIfNeeded() {
-		if (FlavorConfig.isAccrescentFlavor && sharedPreferencesHandler.licenseToken().isEmpty()) {
-			val mail = sharedPreferencesHandler.mail()
-			if (mail.isNotEmpty()) {
-				sharedPreferencesHandler.setMail("")
-				view?.showDialog(LicenseLostDialog.newInstance(mail))
-			}
-		}
 	}
 
 	private fun updateSalePromo() {
@@ -181,7 +155,6 @@ class VaultListPresenter @Inject constructor( //
 	}
 
 	fun onUnlockFullVersionClicked() {
-		Intents.licenseCheckIntent().startActivity(this)
 	}
 
 	fun onSalePromoBannerDismissed(salePromo: SalePromo) {

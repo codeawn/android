@@ -75,7 +75,7 @@ class CryptomatorDocumentsProvider : DocumentsProvider() {
 	private val thumbnailStore by lazy { appComponent.thumbnailStore() }
 	private val thumbnailGenerator by lazy { appComponent.thumbnailGenerator() }
 	private val preferences by lazy { SharedPreferencesHandler(context!!) }
-	private val licenseEnforcer by lazy { LicenseEnforcer(preferences) }
+	private val licenseEnforcer by lazy { LicenseEnforcer() }
 	private val vaultRepository by lazy { appComponent.vaultRepository() }
 	private val closeHandler by lazy { Handler(HandlerThread("DocumentsProviderClose").apply { start() }.looper) }
 

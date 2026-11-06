@@ -17,7 +17,6 @@ import org.cryptomator.presentation.ui.activity.CloudSettingsActivity;
 import org.cryptomator.presentation.ui.activity.CreateVaultActivity;
 import org.cryptomator.presentation.ui.activity.CryptomatorVariantsActivity;
 import org.cryptomator.presentation.ui.activity.ImagePreviewActivity;
-import org.cryptomator.presentation.ui.activity.LicenseCheckActivity;
 import org.cryptomator.presentation.ui.activity.LicensesActivity;
 import org.cryptomator.presentation.ui.activity.S3AddOrChangeActivity;
 import org.cryptomator.presentation.ui.activity.SetPasswordActivity;
@@ -43,7 +42,6 @@ import org.cryptomator.presentation.ui.fragment.UnlockVaultFragment;
 import org.cryptomator.presentation.ui.fragment.VaultListFragment;
 import org.cryptomator.presentation.ui.fragment.WebDavAddOrChangeFragment;
 import org.cryptomator.presentation.ui.fragment.WelcomeIntroFragment;
-import org.cryptomator.presentation.ui.fragment.WelcomeLicenseFragment;
 import org.cryptomator.presentation.ui.fragment.WelcomeNotificationsFragment;
 import org.cryptomator.presentation.ui.fragment.WelcomeScreenLockFragment;
 import org.cryptomator.presentation.workflow.AddExistingVaultWorkflow;
@@ -123,8 +121,6 @@ public interface ActivityComponent {
 
 	void inject(AutoUploadRefreshTokenActivity autoUploadRefreshTokenActivity);
 
-	void inject(LicenseCheckActivity licenseCheckActivity);
-
 	void inject(UnlockVaultActivity unlockVaultActivity);
 
 	void inject(UnlockVaultFragment unlockVaultFragment);
@@ -138,8 +134,6 @@ public interface ActivityComponent {
 	void inject(WelcomeActivity welcomeActivity);
 
 	void inject(WelcomeIntroFragment welcomeIntroFragment);
-
-	void inject(WelcomeLicenseFragment welcomeLicenseFragment);
 
 	void inject(WelcomeNotificationsFragment welcomeNotificationsFragment);
 

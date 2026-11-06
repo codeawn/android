@@ -180,33 +180,6 @@
 			android:exported="false"
 			android:theme="@style/FullscreenTheme" />
 
-		<activity
-			android:name=".ui.activity.LicenseCheckActivity"
-			android:exported="true"
-			android:launchMode="singleTask">
-			<intent-filter android:label="@string/dialog_enter_license_title">
-				<action android:name="android.intent.action.VIEW" />
-
-				<category android:name="android.intent.category.DEFAULT" />
-				<category android:name="android.intent.category.BROWSABLE" />
-
-				<data
-					android:host="*"
-					android:scheme="cryptomator" />
-			</intent-filter>
-			<intent-filter android:label="@string/dialog_enter_license_title">
-				<action android:name="android.intent.action.VIEW" />
-
-				<category android:name="android.intent.category.DEFAULT" />
-				<category android:name="android.intent.category.BROWSABLE" />
-
-				<data
-					android:host="android.cryptomator.org"
-					android:pathPrefix="/app/license"
-					android:scheme="https" />
-			</intent-filter>
-		</activity>
-
 		<provider
 			android:name="androidx.core.content.FileProvider"
 			android:authorities="${applicationId}.fileprovider"
